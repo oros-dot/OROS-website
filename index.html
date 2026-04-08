@@ -5222,6 +5222,9 @@ function centrioStoriaOpenModal(id) {
   var tip = document.getElementById('sb-tooltip');
   if (!tip) return;
 
+  // Timer mouse (cancellabile su mouseout)
+  var _mouseTimer = null;
+
   function showTip(el) {
     var label = el.getAttribute('data-tooltip');
     if (!label) return;
@@ -5235,17 +5238,12 @@ function centrioStoriaOpenModal(id) {
     tip.style.opacity = '0';
   }
 
-  var _tipTimer = null;
-  function hideTipDelayed() {
-    if (_tipTimer) clearTimeout(_tipTimer);
-    _tipTimer = setTimeout(hideTip, 1500);
-  }
-
+  // Desktop: hover mostra / mouseout nasconde
   document.addEventListener('mouseover', function(e) {
     var el = e.target;
     while (el && el !== document.body) {
       if (el.classList && (el.classList.contains('sb-btn') || el.classList.contains('theme-btn'))) {
-        if (_tipTimer) { clearTimeout(_tipTimer); _tipTimer = null; }
+        if (_mouseTimer) { clearTimeout(_mouseTimer); _mouseTimer = null; }
         showTip(el);
         return;
       }
@@ -5265,21 +5263,21 @@ function centrioStoriaOpenModal(id) {
     }
   });
 
-  // Touch: mostra tooltip al tap, sparisce automaticamente dopo 1.5s
+  // Touch (iPad): mostra al tap e imposta un timer INDIPENDENTE che non può essere cancellato
+  // da nessun altro evento (goPage, click, ecc.) — si basa su setTimeout separato.
   document.addEventListener('touchstart', function(e) {
     var el = e.target;
     while (el && el !== document.body) {
       if (el.classList && (el.classList.contains('sb-btn') || el.classList.contains('theme-btn'))) {
-        if (_tipTimer) { clearTimeout(_tipTimer); _tipTimer = null; }
         showTip(el);
-        _tipTimer = setTimeout(hideTip, 1500);
+        // Timer dedicato touch: non condiviso con nient'altro, scatta sempre dopo 1.5s
+        setTimeout(function() { hideTip(); }, 1500);
         return;
       }
       el = el.parentElement;
     }
-    // Tapped fuori dalla sidebar: nascondi subito
+    // Tocco fuori sidebar: nasconde immediatamente
     hideTip();
-    if (_tipTimer) { clearTimeout(_tipTimer); _tipTimer = null; }
   }, { passive: true });
 })();
 </script>
