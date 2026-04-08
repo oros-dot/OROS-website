@@ -2366,16 +2366,16 @@ input[type="date"]::-webkit-date-and-time-value {
         <div style="display:flex;align-items:center;gap:6px;">
           <label style="font-size:10px;color:var(--tv-muted);font-family:'Inter',sans-serif;white-space:nowrap;">Dal</label>
           <input type="date" id="pfChartFrom"
-            style="background:var(--tv-bg);border:1px solid var(--tv-bord);border-radius:6px;padding:4px 8px;color:var(--tv-text);font-family:'Inter',sans-serif;font-size:12px;outline:none;cursor:pointer;"
+            style="background:var(--tv-bg);border:1px solid var(--tv-bord);border-radius:6px;padding:6px 10px;color:var(--tv-text);font-family:'Inter',sans-serif;font-size:13px;outline:none;cursor:pointer;min-width:140px;box-sizing:border-box;"
             oninput="pfRenderChartFiltered()">
         </div>
         <div style="display:flex;align-items:center;gap:6px;">
           <label style="font-size:10px;color:var(--tv-muted);font-family:'Inter',sans-serif;white-space:nowrap;">Al</label>
           <input type="date" id="pfChartTo"
-            style="background:var(--tv-bg);border:1px solid var(--tv-bord);border-radius:6px;padding:4px 8px;color:var(--tv-text);font-family:'Inter',sans-serif;font-size:12px;outline:none;cursor:pointer;"
+            style="background:var(--tv-bg);border:1px solid var(--tv-bord);border-radius:6px;padding:6px 10px;color:var(--tv-text);font-family:'Inter',sans-serif;font-size:13px;outline:none;cursor:pointer;min-width:140px;box-sizing:border-box;"
             oninput="pfRenderChartFiltered()">
         </div>
-        <button onclick="pfChartResetFilter()" style="padding:4px 10px;background:transparent;border:1px solid var(--tv-bord);border-radius:6px;color:var(--tv-muted);font-family:'Inter',sans-serif;font-size:11px;cursor:pointer;">✕ Reset</button>
+        <button onclick="pfChartResetFilter()" style="padding:6px 12px;background:transparent;border:1px solid var(--tv-bord);border-radius:6px;color:var(--tv-muted);font-family:'Inter',sans-serif;font-size:12px;cursor:pointer;white-space:nowrap;">✕ Reset</button>
       </div>
     </div>
     <canvas id="pfProfitChart" height="90"></canvas>
@@ -5207,15 +5207,7 @@ function centrioStoriaOpenModal(id) {
   var tip = document.getElementById('sb-tooltip');
   if (!tip) return;
 
-  function findBtn(el) {
-    while (el && el !== document.body) {
-      if (el.classList && (el.classList.contains('sb-btn') || el.classList.contains('theme-btn'))) return el;
-      el = el.parentElement;
-    }
-    return null;
-  }
-
-  function show(el) {
+  function showTip(el) {
     var label = el.getAttribute('data-tooltip');
     if (!label) return;
     var rect = el.getBoundingClientRect();
@@ -5224,26 +5216,35 @@ function centrioStoriaOpenModal(id) {
     tip.style.opacity = '1';
   }
 
-  function hide() { tip.style.opacity = '0'; }
+  function hideTip() {
+    tip.style.opacity = '0';
+  }
 
-  /* ── Desktop: hover ── */
   document.addEventListener('mouseover', function(e) {
-    var btn = findBtn(e.target);
-    btn ? show(btn) : hide();
-  });
-  document.addEventListener('mouseout', function(e) {
-    if (findBtn(e.target)) hide();
+    var el = e.target;
+    // Walk up the DOM to find the .sb-btn or .theme-btn ancestor
+    while (el && el !== document.body) {
+      if (el.classList && (el.classList.contains('sb-btn') || el.classList.contains('theme-btn'))) {
+        showTip(el);
+        return;
+      }
+      el = el.parentElement;
+    }
+    hideTip();
   });
 
-  /* ── Touch: mostra al tap, sparisce da solo dopo 1500ms
-        Il setTimeout è fire-and-forget: niente lo può cancellare ── */
-  document.addEventListener('touchstart', function(e) {
-    var btn = findBtn(e.target);
-    if (btn) {
-      show(btn);
-      setTimeout(hide, 1500);
+  document.addEventListener('mouseout', function(e) {
+    var rel = e.relatedTarget;
+    // Hide only if leaving a sb-btn/theme-btn entirely
+    var el = e.target;
+    while (el && el !== document.body) {
+      if (el.classList && (el.classList.contains('sb-btn') || el.classList.contains('theme-btn'))) {
+        hideTip();
+        return;
+      }
+      el = el.parentElement;
     }
-  }, { passive: true });
+  });
 })();
 </script>
 
