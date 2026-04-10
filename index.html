@@ -50,7 +50,7 @@ body{
 }
 
 /* ── CANVASES fissi ── */
-#spaceCanvas{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none;}
+#spaceCanvas{position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:0;pointer-events:none;}
 
 /* ── GRAIN ── */
 body::before{
@@ -696,7 +696,7 @@ footer{
 #mesh-portal.grabbing{cursor:grabbing;}
 #mesh-portal.fading{opacity:0;pointer-events:none;transform:scale(1.06);filter:blur(18px);}
 #mesh-portal.entering{opacity:0;}
-#mesh-canvas{display:block;position:absolute;inset:0;width:100%;height:100%;}
+#mesh-canvas{display:block;position:absolute;inset:0;width:100vw;height:100vh;}
 #mesh-hint{
   position:absolute;bottom:6%;left:50%;transform:translateX(-50%);
   font-family:'Raleway',sans-serif;font-weight:200;
@@ -1023,9 +1023,17 @@ body.returning > footer{
   const mouse = {x:0,y:0};
   let W,H,stars=[],t=0;
 
+  const isTouchSC = ('ontouchstart' in window)||navigator.maxTouchPoints>0;
+  let _initialW=0,_initialH=0;
   function init(){
-    W = canvas.width = window.innerWidth;
-    H = canvas.height = window.innerHeight;
+    if(isTouchSC && _initialW){
+      W = canvas.width = _initialW;
+      H = canvas.height = _initialH;
+    } else {
+      W = canvas.width = window.innerWidth;
+      H = canvas.height = window.innerHeight;
+      if(isTouchSC){_initialW=W;_initialH=H;}
+    }
     stars=[];
     for(let i=0;i<700;i++){
       stars.push({
@@ -1272,7 +1280,7 @@ controls.autoRotate = true;
 controls.autoRotateSpeed = 0.32;
 controls.minDistance = 60;
 controls.maxDistance = 1500;
-controls.zoomSpeed = (('ontouchstart' in window)||navigator.maxTouchPoints>0) ? 0.5 : 3.2;
+controls.zoomSpeed = (('ontouchstart' in window)||navigator.maxTouchPoints>0) ? 1.4 : 3.2;
 
 const composer = new EffectComposer(renderer);
 composer.addPass(new RenderPass(scene, camera));
@@ -1613,11 +1621,7 @@ function loop(){
     const targetDist = startDist + (endDist - startDist)*ke;
     const dir = camera.position.clone().normalize();
     camera.position.copy(dir.multiplyScalar(targetDist));
-    // Sposta il lookAt gradualmente sulla seconda O (offset a destra del centro)
-    // Sprite OROS scale 220x55 → lettere centrate a circa -82, -27, +27, +82
-    const secondO_X = 28;
-    camera.lookAt(secondO_X * ke, 0, 0);
-    // OROS sprite RESTA VISIBILE fino alla fine — anzi, diventa più brillante
+    camera.lookAt(0, 0, 0);
     orosSprite.visible = true;
     orosSprite.material.opacity = Math.min(1, 0.55 + k * 0.9);
     // Bloom ed exposure crescono gradualmente
