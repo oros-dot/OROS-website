@@ -1079,7 +1079,12 @@ body.returning > footer{
   }
 
   init(); draw();
-  window.addEventListener('resize',init);
+  let _lastW = window.innerWidth;
+  window.addEventListener('resize',()=>{
+    if(Math.abs(window.innerWidth - _lastW) < 2) return;
+    _lastW = window.innerWidth;
+    init();
+  });
   document.addEventListener('mousemove',e=>{mouse.x=e.clientX;mouse.y=e.clientY;});
 })();
 
@@ -1267,7 +1272,7 @@ controls.autoRotate = true;
 controls.autoRotateSpeed = 0.32;
 controls.minDistance = 60;
 controls.maxDistance = 1500;
-controls.zoomSpeed = 3.2;
+controls.zoomSpeed = (('ontouchstart' in window)||navigator.maxTouchPoints>0) ? 0.5 : 3.2;
 
 const composer = new EffectComposer(renderer);
 composer.addPass(new RenderPass(scene, camera));
@@ -1275,7 +1280,10 @@ const bloom = new UnrealBloomPass(new THREE.Vector2(innerWidth,innerHeight), 0.7
 composer.addPass(bloom);
 composer.addPass(new OutputPass());
 
+let _lastWMesh = window.innerWidth;
 addEventListener('resize',()=>{
+  if(Math.abs(window.innerWidth - _lastWMesh) < 2) return;
+  _lastWMesh = window.innerWidth;
   camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();
   renderer.setSize(innerWidth,innerHeight);
   composer.setSize(innerWidth,innerHeight);
