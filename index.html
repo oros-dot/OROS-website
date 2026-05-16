@@ -667,6 +667,22 @@ body.returning > footer{
 </head>
 <body class="portal-active">
 
+<script>
+/* Blocca browser-zoom (pinch trackpad Mac + gesture Safari) mentre il portal è attivo.
+   OrbitControls riceve comunque l'evento wheel per lo zoom della scena 3D. */
+(function(){
+  const portalActive = () => document.body.classList.contains('portal-active');
+  window.addEventListener('wheel', e => {
+    if(e.ctrlKey && portalActive()) e.preventDefault();
+  }, {passive:false, capture:true});
+  ['gesturestart','gesturechange','gestureend'].forEach(ev=>{
+    window.addEventListener(ev, e => {
+      if(portalActive()) e.preventDefault();
+    }, {passive:false});
+  });
+})();
+</script>
+
 <!-- ═══ MESH PORTAL — pre-landing ═══ -->
 <div id="mesh-portal">
   <canvas id="mesh-canvas"></canvas>
