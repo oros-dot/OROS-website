@@ -1471,26 +1471,32 @@ for(let i=0;i<NN;i++){
   nebulaSize[i] = 0.5 + Math.random()*1.2;
 }
 
-function dotTexture(){
-  const s=128;const cv=document.createElement('canvas');cv.width=cv.height=s;
-  const g=cv.getContext('2d');
-  const grd=g.createRadialGradient(s/2,s/2,0,s/2,s/2,s/2);
-  grd.addColorStop(0,'rgba(255,255,255,1)');
-  grd.addColorStop(0.18,'rgba(255,255,255,0.92)');
-  grd.addColorStop(0.45,'rgba(255,255,255,0.32)');
-  grd.addColorStop(0.75,'rgba(255,255,255,0.07)');
-  grd.addColorStop(1,'rgba(255,255,255,0)');
-  g.fillStyle=grd;g.fillRect(0,0,s,s);
-  return new THREE.CanvasTexture(cv);
+function digitTexture(){
+  const s=128;const cv=document.createElement('canvas');cv.width=s*2;cv.height=s;
+  const g=cv.getContext('2d');g.clearRect(0,0,s*2,s);
+  g.font='400 78px "IBM Plex Mono", monospace';
+  g.textAlign='center';g.textBaseline='middle';
+  g.fillStyle='rgba(255,255,255,0.95)';
+  g.fillText('0',s/2,s/2+3);
+  g.fillText('1',s+s/2,s/2+3);
+  const tex=new THREE.CanvasTexture(cv);
+  tex.minFilter=THREE.LinearFilter;tex.magFilter=THREE.LinearFilter;
+  return tex;
 }
-const TEX = dotTexture();
+const TEX = digitTexture();
+if(document.fonts && document.fonts.ready){
+  document.fonts.ready.then(()=>{
+    const t2=digitTexture();
+    TEX.image=t2.image;TEX.needsUpdate=true;
+  });
+}
 const uTime = {value: 0};
 
 function makePointsMaterial(){
   return new THREE.ShaderMaterial({
     uniforms:{uTime:uTime,uTex:{value:TEX},uPixel:{value:renderer.getPixelRatio()}},
-    vertexShader:`attribute float aSize;varying vec3 vColor;uniform float uPixel;void main(){vColor=color;vec4 mv=modelViewMatrix*vec4(position,1.0);gl_PointSize=aSize*uPixel*(340.0/-mv.z);gl_Position=projectionMatrix*mv;}`,
-    fragmentShader:`uniform sampler2D uTex;varying vec3 vColor;void main(){vec4 t=texture2D(uTex,gl_PointCoord);gl_FragColor=vec4(vColor,1.0)*t;}`,
+    vertexShader:`attribute float aSize;attribute float aSeed;varying vec3 vColor;varying float vSeed;uniform float uPixel;void main(){vColor=color;vSeed=aSeed;vec4 mv=modelViewMatrix*vec4(position,1.0);gl_PointSize=aSize*uPixel*(340.0/-mv.z);gl_Position=projectionMatrix*mv;}`,
+    fragmentShader:`uniform sampler2D uTex;uniform float uTime;varying vec3 vColor;varying float vSeed;void main(){float spd=0.6+fract(vSeed*7.31)*1.4;float digit=step(0.5,fract(vSeed+uTime*spd));float px=clamp(gl_PointCoord.x,0.08,0.92);vec2 uv=vec2((px+digit)*0.5,1.0-gl_PointCoord.y);vec4 t=texture2D(uTex,uv);gl_FragColor=vec4(vColor,1.0)*t;}`,
     vertexColors:true,transparent:true,blending:THREE.AdditiveBlending,depthWrite:false,
   });
 }
@@ -1508,6 +1514,8 @@ const clGeom = new THREE.BufferGeometry();
 clGeom.setAttribute('position',new THREE.BufferAttribute(clPos,3));
 clGeom.setAttribute('color',new THREE.BufferAttribute(clCol,3));
 clGeom.setAttribute('aSize',new THREE.BufferAttribute(clSize,1));
+const clSeed=new Float32Array(NCL);for(let i=0;i<NCL;i++)clSeed[i]=Math.random();
+clGeom.setAttribute('aSeed',new THREE.BufferAttribute(clSeed,1));
 scene.add(new THREE.Points(clGeom,makePointsMaterial()));
 
 const wPos = new Float32Array(NW*3);
@@ -1523,12 +1531,16 @@ const wGeom = new THREE.BufferGeometry();
 wGeom.setAttribute('position',new THREE.BufferAttribute(wPos,3));
 wGeom.setAttribute('color',new THREE.BufferAttribute(wCol,3));
 wGeom.setAttribute('aSize',new THREE.BufferAttribute(wSize,1));
+const wSeed=new Float32Array(NW);for(let i=0;i<NW;i++)wSeed[i]=Math.random();
+wGeom.setAttribute('aSeed',new THREE.BufferAttribute(wSeed,1));
 scene.add(new THREE.Points(wGeom,makePointsMaterial()));
 
 const nGeom = new THREE.BufferGeometry();
 nGeom.setAttribute('position',new THREE.BufferAttribute(nebulaPos,3));
 nGeom.setAttribute('color',new THREE.BufferAttribute(nebulaCol,3));
 nGeom.setAttribute('aSize',new THREE.BufferAttribute(nebulaSize,1));
+const nSeed=new Float32Array(NN);for(let i=0;i<NN;i++)nSeed[i]=Math.random();
+nGeom.setAttribute('aSeed',new THREE.BufferAttribute(nSeed,1));
 scene.add(new THREE.Points(nGeom,makePointsMaterial()));
 
 // OROS centro
